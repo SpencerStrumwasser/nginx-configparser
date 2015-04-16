@@ -17,6 +17,15 @@ TEST(NginxConfigStatementTest, toString){
 	EXPECT_EQ("foo bar;\n", statement.ToString(0));
 }
 
+TEST(NginxConfigStatementTest, tokensAt){
+	NginxConfigStatement statement;
+	statement.tokens_.push_back("foo");
+	statement.tokens_.push_back("bar");
+
+	EXPECT_EQ("foo", statement.tokens_.at(0));
+	EXPECT_EQ("bar", statement.tokens_.at(1));
+}
+
 class NginxStringConfigTest : public ::testing::Test {
 protected:
 	bool ParseString(const std::string& config_string){
@@ -33,14 +42,20 @@ TEST_F(NginxStringConfigTest, SimpleTextConfig){
 
 }
 
-
 TEST(NginxConfigParserTest, SimpleBadTextConfig){
 	const std::string config_text = "foo bar";
 	std::stringstream config_stream(config_text);
 	NginxConfigParser parser;
 	NginxConfig config;
 	EXPECT_FALSE(parser.Parse(&config_stream, &config));
-	
+}
+
+TEST(NginxConfigParserTest, SimpleGoodTextConfig){
+	const std::string config_text = "foo bar;";
+	std::stringstream config_stream(config_text);
+	NginxConfigParser parser;
+	NginxConfig config;
+	EXPECT_TRUE(parser.Parse(&config_stream, &config));
 }
 
 TEST_F(NginxStringConfigTest,NestedConfig)
@@ -53,6 +68,35 @@ TEST_F(NginxStringConfigTest,NestedConfig)
 		"}"));
 }
 
+TEST_F(NginxStringConfigTest,NestedConfig2)
+{
+	EXPECT_TRUE(ParseString(
+		"foo { "
+		"    bar  "
+		"         baz;"
+		"       "
+		"}"));
+}
+
+TEST_F(NginxStringConfigTest,NestedConfig3)
+{
+	EXPECT_TRUE(ParseString(
+		"foo { "
+		"    bar  "
+		"         baz;"
+		"       "
+		""));
+}
+
+TEST_F(NginxStringConfigTest,BadNestedConfig)
+{
+	EXPECT_FALSE(ParseString(
+		"foo { "
+		"    bar  "
+		"         baz"
+		"       "
+		""));
+}
 
 TEST_F(NginxStringConfigTest, SimpleTextConfig2){
 
